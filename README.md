@@ -1,7 +1,7 @@
 GTFS RESTful WebService
 =======================
 
-First of all, what is GTFS? It's the General Transport Feed Specification, a standard for managing public transportation data for a city or defined area. In short words, a GTFS repository is a .zip file containing lots of .txt files as comma-separated-values (CSV). More info: https://developers.google.com/transit/gtfs/
+First of all, what is GTFS? It's the General Transit Feed Specification, a standard for managing public transportation data for a city or defined area. In short words, a GTFS repository is a .zip file containing lots of .txt files as comma-separated-values (CSV). More info: https://developers.google.com/transit/gtfs/
 
 This project will try to create a WebService which will allow multiple users to manage multiple GTFS repositories in the same system, based on a RESTful point of view about web services, using Chris Kacerguis' REST implementation for CodeIgniter (https://github.com/chriskacerguis/codeigniter-restserver).
 
