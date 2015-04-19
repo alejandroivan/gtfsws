@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Pruebas de sistema</title>
+        <meta charset="utf8" />
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript">
+            function login( username, password )
+            {
+                $.post(
+                    'login?format=json',
+                    {
+                        'dataType' : 'json',
+                        'username' : username,
+                        'password' : password
+                    },
+                    null,
+                    'html'
+                )
+                .done(function(data, status, xhr) {
+                    alert( 'HTTP code: ' + xhr.status + '\nStatus: ' + status + '\nStatus message: ' + data );
+                    
+                    /*if (
+                        xhr.status == 200
+                        &&
+                        status == 'success'
+                    )
+                        window.location.replace( '../' );*/
+                })
+                .fail(function(xhr, status, data) {
+                    var added = ( xhr.status == 409 ) ? '\n\nYa existe una sesión iniciada.' : '';
+                    alert( 'HTTP code: ' + xhr.status + '\nStatus: ' + status + '\nStatus message: ' + data + added);
+                });
+            }
+            
+            
+            
+            
+            function logout()
+            {
+                $.get( 'logout' )
+                .done(function() {
+                    alert('Sesión cerrada.');
+                });
+            }
+            
+            
+            
+        
+            if ( jQuery && $ && jQuery === $ ) // jQuery ha sido cargado exitosamente
+            {
+                $(document).ready(function() {
+                   
+                   
+                   
+                    $(".login").click(function(e) {
+                        e.preventDefault();
+                        
+                        var username = $(this).data('username');
+                        var password = $(this).data('password');
+                        
+                        login( username, password );
+                    });
+                    
+                    
+                    
+                    $('#logout').click(function(e) {
+                        e.preventDefault();
+                        
+                        logout();
+                    });
+                    
+                    
+                    
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <p>
+            <a href="/">&lt; &lt; &lt; Volver al index</a>
+        </p>
+        <br />
+        
+        <a href="" class="login" data-username="test@test.cl" data-password="test">Login test (admin)</a>
+        <br />
+        <a href="" class="login" data-username="test@test.cl" data-password="test2">Login test (admin) - Datos incorrectos</a>
+        <br />
+        <a href="" class="login" data-username="test2@test.cl" data-password="test2">Login test (normal)</a>
+        <br />
+        <a href="" class="login" data-username="test2@test.cl" data-password="test">Login test (normal) - Datos incorrectos</a>
+        <br />
+        <a href="" id="logout">Cerrar cualquier sesión</a>
+    </body>
+</html>
