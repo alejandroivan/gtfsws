@@ -60,11 +60,6 @@ class Agencies extends REST_Controller
         if ( ! $this->Usuarios->loggedIn() )
             show_error( 'Solo usuarios registrados pueden utilizar este módulo.', HTTP_FORBIDDEN, 'Acceso restringido' );
         
-        /*
-         * Medir tiempos de ejecución
-         */
-        $utime_inicio = microtime( TRUE );
-        
         $agencies = $this->Basedatos->agency( $this->Usuarios, $agency_id );
 
         foreach ( $agencies AS $pos => $agency )
@@ -73,15 +68,6 @@ class Agencies extends REST_Controller
             $agencies[$pos]     = $agency;
         }
         
-        /*
-         * Fin Medir tiempo de ejecución
-         */
-        $utime_final = microtime( TRUE );
-        $utime_delta = $utime_final - $utime_inicio;
-        
-        die( "<b>Tiempos en segundos</b><br /><br />Tiempo de inicio (s): {$utime_inicio} - Tiempo de fin (s): {$utime_final}<br />Tiempo de ejecución: {$utime_delta} (s)");
-        
-
         $this->response( $agencies );
     }
 }

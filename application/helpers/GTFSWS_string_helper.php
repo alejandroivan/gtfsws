@@ -22,10 +22,26 @@ if ( !function_exists( 'prepare_string' ))
         $CI =& get_instance(); // Obtener instancia principal del framework para usar métodos de clases
         $output = $CI->db->escape_str( $output );
         
+        if (
+            is_numeric( $output )
+            &&
+            intval( $output ) > 0
+        )
+            $output = intval ( $output );
+        
         return $output;
     }
 }
 
+
+if ( ! function_exists( 'prepare_email' ) )
+{
+    function prepare_email( $email )
+    {
+        $email = ( strpos( $email, '@' ) === FALSE && strlen( trim( $email ) ) ) ? urldecode( $email ) : $email;
+        return prepare_string( $email );
+    }
+}
 
 
 /*

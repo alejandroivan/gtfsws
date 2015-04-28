@@ -6,9 +6,6 @@ class Login extends REST_Controller
     function __construct()
     {
         parent::__construct();
-        
-        // Modelo de Usuarios se carga automáticamente
-        // $this->load->model( 'Gtfsws_usuarios' );
     }
     
     function index_post()
@@ -24,10 +21,6 @@ class Login extends REST_Controller
             
             else
             {
-                //$this->output->set_status_header( HTTP_OK, 'Sesión iniciada.' );
-                
-                /*$this->session->set_flashdata( 'login_message', "Sesión iniciada. Correo electrónico: {$this->Usuarios->getEmail()} - Estado de Administrador: " . ( $this->Usuarios->isAdmin() ? 'Habilitado' : 'Deshabilitado' ) );
-                redirect( '', 'refresh' );*/
                 $message = array(
                     'status'        => 'ok',
                     'message'       => 'Login successful.',
@@ -40,10 +33,7 @@ class Login extends REST_Controller
         }
         else
         {
-            /*$this->session->set_flashdata( 'login_message', "Ya hay una sesión iniciada. Correo electrónico: {$this->Usuarios->getEmail()} - Estado de Administrador: " . ( $this->Usuarios->isAdmin() ? 'Habilitado' : 'Deshabilitado' ) );
-            redirect( '', 'refresh' );*/
-            
-            header( "HTTP/1.0 409 Conflict");
+            header( 'HTTP/1.0 409 Conflict' );
             exit;
         }
         

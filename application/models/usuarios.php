@@ -22,7 +22,7 @@ class Usuarios extends CI_Model
         
         $user = $this->getUserAuthenticated( $username, $password );
         
-        if ( !$user OR $user->enabled == 0 ) // Usuario no existe o no se encuentra habilitado
+        if ( ! $user OR $user->enabled == 0 ) // Usuario no existe o no se encuentra habilitado
             return FALSE;
         else // Todo OK, crear sesión y guardar alguna información para mantenerla activa.
         {

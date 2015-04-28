@@ -24,7 +24,7 @@ For who is this useful?
 
 License?
 
-Basically GPLv3 (see LICENSE). **You will not, however, be able to sell derivative software. Even more, derivative software will need to be FULLY GPL LICENSED, that means software which mixes any part of the code of this project with propietary code will not be tolerated. All diagrams, SQL sentences and other documentation included with this project is also restricted this way** (you can install this software on propietary servers, but you can't get money for that). You can, however, give support and get paid for it without problems after the system is functional (remember that modifications are GPL licensed!).
+Basically GPLv3 (see LICENSE). **You will not, however, be able to sell derivative software. Even more, derivative software will need to be FULLY GPL-based LICENSED (GPL including this same restriction), that means software which mixes any part of the code of this project with propietary code will not be tolerated. All diagrams, SQL sentences and other documentation included with this project is also restricted this way** (you can install this software on propietary servers, but you can't get money for that). You can, however, give support and get paid for it without problems after the system is functional (remember that modifications are GPL licensed!).
 
 
 Which SQL is needed for creating the MySQL tables?
@@ -45,3 +45,9 @@ Last note
 This is a **work in progress**. Therefore, there are **LOTS** of unimplemented stuff. I'm just publishing this for you to see if something's useful for you.
 Remember to work with the **RewriteBase** variable in .htaccess for your specific web server setup.
 Have fun!
+
+Last last note
+==============
+What if I wanna test from terminal? Add the content of **test_profile.txt** to your **.profile** file (tested on OS X, should probably work on **.bash_profile** on GNU/Linux environments but I can't be sure).
+Re-open your terminal window (if opened) and you'll have the commands **sendGet**, **sendPost**, **sendDelete**, **sendPut**, **sendLogin** and **setLogout** to test the webservice. Remember to edit every function with its own **BASEURL**.
+Remember that the email-password for the default user is **test@test.cl** and **test**, respectively. 

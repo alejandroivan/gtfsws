@@ -18,7 +18,7 @@
  * NOTE: If you change these, also change the error_reporting() code below
  *
  */
-	define('ENVIRONMENT', 'development');
+	define('ENVIRONMENT', 'production');
     define('GTFSWS_VERSION', '0.3b (method tests)');
     define('SQL_LOG', FALSE);
 /*

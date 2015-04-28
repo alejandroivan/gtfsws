@@ -1,0 +1,96 @@
+##
+## This collection of functions is part of the GTFS WebService package.
+## These functions, when added to your .profile file on OS X (not tested on .bash_profile on GNU/Linux),
+## will allow you to test the webservice on your own server.
+##
+## Remember to edit the BASEURL for every function and you'll be fine.
+##
+## This package is under a GPL-based (modified) license for free distribution.
+## PLEASE read it, since it will cause troubles with propietary software. You're advised.
+## More info at https://github.com/alejandroivan/gtfsws see README.md)
+##
+
+alias sendLogin="sendPost login \"username=test@test.cl&password=test\""
+alias sendLogout="sendGet logout"
+
+function sendPost() {
+	BASEURL="http://localhost/gtfsws"
+	if test -z "$2"
+	then
+		sendPostUsage
+	else
+		echo -e "[REQUEST: POST] curl -X POST -b cookiejar -c cookiejar -H \"Accept: application/json\" -d \"$2\" $BASEURL/$1"
+		echo -e 
+		curl -X POST -b cookiejar -c cookiejar -H "Accept: application/json" -d $2 $BASEURL/$1
+		echo -e
+	fi
+}
+
+function sendPut() {
+	BASEURL="http://localhost/gtfsws"
+	if test -z "$2"
+	then
+		sendPutUsage
+	else
+		echo -e "[REQUEST: PUT] curl -X PUT -b cookiejar -c cookiejar -H \"Accept: application/json\" -d \"$2\" $BASEURL/$1"
+		echo -e 
+		curl -X PUT -b cookiejar -c cookiejar -H "Accept: application/json" -d $2 $BASEURL/$1
+		echo -e
+	fi
+}
+
+function sendGet() {
+	BASEURL="http://localhost/gtfsws"
+	if test -z "$1"
+	then
+		sendGetUsage
+	else
+		echo -e "[REQUEST: GET] curl -X GET -b cookiejar -c cookiejar -H \"Accept: application/json\" $BASEURL/$@"
+		echo -e
+		curl -X GET -b cookiejar -c cookiejar -H "Accept: application/json" $BASEURL/$@
+		echo -e
+	fi
+}
+
+function sendDelete() {
+	BASEURL="http://localhost/gtfsws"
+	if test -z "$1"
+	then
+		sendDeleteUsage
+	else
+		echo -e "[REQUEST: DELETE] curl -X DELETE -b cookiejar -c cookiejar -H \"Accept: application/json\" $BASEURL/$@"
+		echo -e
+		curl -X DELETE -b cookiejar -c cookiejar -H "Accept: application/json" $BASEURL/$@
+		echo -e
+	fi
+}
+
+function sendPostUsage() {
+	echo -e "IMPORTANT: <data> must be inside double quotes (\") and special characters must be escaped."
+	echo -e
+	echo -e "USAGE:     $ sendPost <method> <data>"
+	echo -e "EXAMPLE:   $ sendPost login \"username=some_email@test.com&password=some_password\""
+	echo -e
+}
+
+function sendPutUsage() {
+	echo -e "IMPORTANT: <new_data> must be inside double quotes (\") and special characters must be escaped."
+	echo -e
+	echo -e "USAGE:     $ sendPut <resource> <new_data>"
+	echo -e "EXAMPLE:   $ sendPut repositories/id/1 \"name=New+Name&description=New+Description&start_position_lat=0.00&start_position_lon=0.00\""
+	echo -e
+}
+
+function sendDeleteUsage() {
+	echo -e "USAGE:     $ sendDelete <resource>[?<extra_params>]"
+	echo -e "EXAMPLE:   $ sendDelete repositories/id/1"
+	echo -e "EXAMPLE:   $ sendDelete repositories/id/1?some_key=some_value\&some_other_key=some_other_value"
+	echo -e
+}
+
+function sendGetUsage() {
+	echo -e "USAGE:     $ sendGet <resource>[?<extra_params>]"
+	echo -e "EXAMPLE:   $ sendGet repositories/id/1"
+	echo -e "EXAMPLE:   $ sendGet repositories/id/1?some_key=some_value\&some_other_key=some_other_value"
+	echo -e
+}

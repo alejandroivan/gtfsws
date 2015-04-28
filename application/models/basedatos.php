@@ -5,7 +5,7 @@ class Basedatos extends CI_Model
     function __construct()
     {
         parent::__construct();
-        $this->load->helper( 'string' );
+        $this->load->helper(array( 'string', 'email' ));
     }
     
     /*
@@ -27,7 +27,7 @@ class Basedatos extends CI_Model
         
         if ( ! $user->isAdmin() ) // Si no es Administrador, filtrar a los repositorios asociados (si existen)
         {
-            $username = prepare_string( $user->get_email() );
+            $username = prepare_email( $user->get_email() );
             $this->db->join(
                 'gtfsws_repository_users',
                 'gtfsws_repositories.id = gtfsws_repository_users.repository_id',
@@ -60,7 +60,7 @@ class Basedatos extends CI_Model
             return NULL;
         
         $repository_id      = prepare_string( $repository_id );
-        $username           = prepare_string( $user->get_email() );
+        $username           = prepare_email( $user->get_email() );
         $where_conditions   = array( // Condiciones en el where (array para poder agregar más)
             'gtfsws_repositories.id' => $repository_id
         );
@@ -89,10 +89,11 @@ class Basedatos extends CI_Model
 
     function delete_repository( $user, $repository_id )
     {
-        $success = FALSE;
+        $repository_id  = prepare_string( $repository_id );
+        $success        = FALSE;
         
         if (
-            $this->Basedatos->repository_ownership( $this->Usuarios, $repository_id )
+            $this->Basedatos->repository_ownership( $user, $repository_id )
         )
         {
             $this->db->where( 'id', $repository_id );
@@ -103,13 +104,29 @@ class Basedatos extends CI_Model
         return ( $success && $this->db->affected_rows() == 1 );
     }
     
+    function update_repository( $user, $repository_id, $data )
+    {
+        $repository_id  = prepare_string( $repository_id );
+        $success        = FALSE;
+        
+        if (
+            $this->Basedatos->repository_ownership( $user, $repository_id )
+        )
+        {
+            $this->db->where( 'id', $repository_id );
+            $success = $this->db->update( 'gtfsws_repositories', $data );
+        }
+        
+        return ( $success && $this->db->affected_rows() == 1 );
+    }
+    
     function repository_ownership( $user, $repository_id )
     {
         if ( $user->isAdmin() )
             return TRUE;
         
-        $username       = prepare_string( $user->get_email() );
         $repository_id  = prepare_string( $repository_id );
+        $username       = prepare_email( $user->get_email() );
         
         $this->db->select( 'user_email, role' );
         $this->db->from( 'gtfsws_repository_users' );
@@ -128,6 +145,8 @@ class Basedatos extends CI_Model
         if ( ! $repo_id )
             return FALSE;
         
+        $repo_id = prepare_string( $repo_id );
+        
         $this->db->select( 'COUNT(id) AS num' );
         $this->db->from( 'gtfsws_repositories' );
         $this->db->where( 'id', $repo_id );
@@ -136,10 +155,342 @@ class Basedatos extends CI_Model
         
         return ( $result[0]->num == 1 );
     }
-
+    
+    public function repository_associates( $user, $repo_id )
+    {
+        if (
+            ! $user->isAdmin()
+            OR
+            ! $repo_id
+            OR
+            ! ( is_numeric( $repo_id ) && intval( $repo_id ) > 0 )
+        )
+            return FALSE;
+        
+        $repo_id = prepare_string( $repo_id );
+        
+        return $this->db->query("
+            SELECT
+                email,
+                name,
+                is_admin,
+                enabled,
+                NULLIF( MIN( COALESCE( role, 0 ) ), 0 ) AS role
+            FROM
+            (
+                (
+                    SELECT DISTINCT
+                        gtfsws_users.email AS email,
+                        gtfsws_users.name AS name,
+                        gtfsws_users.is_admin AS is_admin,
+                        gtfsws_users.enabled AS enabled,
+                        gtfsws_repository_users.role AS role
+                    FROM
+                        gtfsws_users
+                    INNER JOIN
+                        gtfsws_repository_users
+                    ON
+                        gtfsws_users.email = gtfsws_repository_users.user_email
+                    WHERE
+                        gtfsws_repository_users.repository_id = '{$repo_id}'
+                )
+                UNION
+                (
+                    SELECT
+                        email,
+                        name,
+                        is_admin,
+                        enabled,
+                        null AS role
+                    FROM
+                        gtfsws_users
+                    WHERE
+                        is_admin = 1
+                )
+            ) AS U
+            GROUP BY
+                U.email
+        ")->result();
+    }
+    
+    public function repository_associates_add( $user, $repo_id, $email, $role )
+    {
+        // Comprobación de datos
+        if (
+            ! $user->isAdmin()
+            OR
+            ! $repo_id
+            OR
+            ! $email
+            OR
+            ! $role
+            OR
+            ! ( is_numeric( $repo_id ) && intval( $repo_id ) > 0 )
+            OR
+            ! valid_email( $email )
+            OR
+            ! ( is_numeric( $role ) && intval( $role ) > 0 )
+        )
+            return FALSE;
+        
+        $email = prepare_email( $email );
+        
+        $data = array(
+            'user_email'    => $email,
+            'repository_id' => $repo_id,
+            'role'          => $role
+        );
+        
+        $this->db->set( $data );
+        $this->db->insert( 'gtfsws_repository_users' );
+        
+        return ( $this->db->affected_rows() == 1 );
+    }
+    
+    public function repository_associates_update( $user, $repo_id, $email, $role )
+    {
+        // Comprobación de datos
+        if (
+            ! $user->isAdmin()
+            OR
+            ! $repo_id
+            OR
+            ! $email
+            OR
+            ! $role
+            OR
+            ! ( is_numeric( $repo_id ) && intval( $repo_id ) > 0 )
+            OR
+            ! valid_email( $email )
+            OR
+            ! ( is_numeric( $role ) && intval( $role ) > 0 )
+        )
+            return FALSE;
+        
+        $email = prepare_email( $email );
+        
+        $where_conditions = array(
+            'user_email'    => $email,
+            'repository_id' => $repo_id
+        );
+        
+        $this->db->set( 'role', $role );
+        $this->db->where( $where_conditions );
+        $this->db->update( 'gtfsws_repository_users' );
+        
+        return ( $this->db->affected_rows() == 1 );
+    }
+    
+    public function repository_associates_delete( $user, $repo_id, $email )
+    {
+        // Comprobación de datos
+        if (
+            ! $user->isAdmin()
+            OR
+            ! $repo_id
+            OR
+            ! $email
+            OR
+            ! ( is_numeric( $repo_id ) && intval( $repo_id ) > 0 )
+            OR
+            ! valid_email( $email )
+        )
+            return FALSE;
+        
+        $email = prepare_email( $email );
+        
+        $where_conditions = array(
+            'user_email'    => $email,
+            'repository_id' => $repo_id
+        );
+        
+        $this->db->where( $where_conditions );
+        $this->db->delete( 'gtfsws_repository_users' );
+        
+        return ( $this->db->affected_rows() > 0 );
+    }
     /*
      * /REPOSITORIOS
      */
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /*
+     * USUARIOS
+     */
+    
+    public function users( $user )
+    {
+        if ( ! $user->isAdmin() )
+            return FALSE;
+        
+        $result = array();
+        
+        $this->db->select( 'email, name, is_admin, enabled' );
+        $this->db->from( 'gtfsws_users' );
+        $this->db->order_by( 'enabled', 'desc' );
+        $this->db->order_by( 'is_admin', 'desc' );
+        $this->db->order_by( 'email', 'asc' );
+        
+        return $this->db->get()->result();
+    }
+    
+    public function users_new( $user, $data )
+    {
+        if (
+            ! $user->isAdmin()
+            OR
+            ! isset( $data['email'] )
+            OR
+            ! isset( $data['raw_password'] )
+            OR
+            ! isset( $data['name'] )
+            OR
+            ! isset( $data['is_admin'] )
+            OR
+            ! isset( $data['enabled'] )
+            OR
+            ! ( valid_email( $data['email'] ) && strlen( trim( $data['email'] ) ) > 0 )
+            OR
+            strlen( trim( $data['raw_password'] ) ) == 0
+            OR
+            strlen( trim( $data['name'] ) ) == 0
+            OR
+            ( $data['is_admin'] != 1 && $data['is_admin'] != 0 )
+            OR
+            ( $data['enabled'] != 1 && $data['enabled'] != 0 )
+        )
+            return FALSE;
+        
+        $insert_data = array(
+            'email'     => prepare_email( $data['email'] ),
+            'password'  => md5( prepare_string( $data['raw_password'] ) ),
+            'name'      => prepare_string( $data['name'] ),
+            'is_admin'  => prepare_string( $data['is_admin'] ),
+            'enabled'   => prepare_string( $data['enabled'] )
+        );
+        
+        $this->db->set( $insert_data );
+        $this->db->insert( 'gtfsws_users' );
+        
+        return ( $this->db->affected_rows() == 1 );
+    }
+    
+    public function users_delete( $user )
+    {
+        if ( ! $user->isAdmin() )
+            return FALSE;
+        
+        $this->db->where( 'gtfsws_users.email != ', prepare_email( $user->get_email() ) );
+        $this->db->delete( 'gtfsws_users' );
+        
+        return ( $this->db->affected_rows() > 0 );
+    }
+    
+    public function users_email( $user, $email )
+    {
+        $email  = prepare_email( $email );
+        
+        if (
+            ! $user->isAdmin()
+            OR
+            ! $email
+            OR
+            ! valid_email( $email )
+        )
+            return FALSE;
+        
+        $email = prepare_email( $email );
+        
+        $this->db->select( 'email, name, is_admin, enabled' );
+        $this->db->from( 'gtfsws_users' );
+        $this->db->where( 'email', $email );
+        
+        return $this->db->get()->result();
+    }
+    
+    public function users_email_delete( $user, $email )
+    {
+        $email  = prepare_email( $email );
+        
+        if (
+            ! $user->isAdmin()
+            OR
+            ! $email
+            OR
+            ! valid_email( $email )
+        )
+            return FALSE;
+        
+        if ( prepare_email( $user->get_email() ) == $email ) // No se puede eliminar a sí mismo
+            return FALSE;
+        
+        $this->db->where( 'email', $email );
+        $this->db->delete( 'gtfsws_users' );
+        
+        return ( $this->db->affected_rows() > 0 );
+    }
+    
+    public function users_email_update( $user, $email, $data )
+    {
+        $email = prepare_email( $email );
+        
+        if (
+            ! $user->isAdmin()
+            OR
+            ( isset( $data['raw_password'] ) && strlen( trim( $data['raw_password'] ) ) == 0 )
+            OR
+            ( isset( $data['name'] ) && strlen( trim( $data['name'] ) ) == 0 )
+            OR
+            ( // Los siguientes valores no son modificables para sí mismo
+                prepare_email( $user->get_email() ) == $email
+                &&
+                ( $data['is_admin'] !== NULL OR $data['enabled'] !== NULL )
+            )
+        )
+            return FALSE;
+        
+        $this->db->where( 'email', $email );
+        $updated = $this->db->update( 'gtfsws_users', $data );
+        
+        return ( $updated && $this->db->affected_rows() == 1 );
+    }
+    
+    /*
+     * /USUARIOS
+     */
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -152,7 +503,7 @@ class Basedatos extends CI_Model
             return NULL;
         
         $repository_id      = prepare_string( $repository_id );
-        $username           = prepare_string( $user->get_email() );
+        $username           = prepare_email( $user->get_email() );
         $where_conditions   = array( // Condiciones en el where (array para poder agregar más)
             'gtfsws_repository_id' => $repository_id
         );
